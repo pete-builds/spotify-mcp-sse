@@ -1,0 +1,12 @@
+services:
+  mcp-spotify:
+    build: .
+    container_name: mcp-spotify
+    restart: unless-stopped
+    network_mode: host
+    env_file:
+      - .env
+    environment:
+      - MCP_HOST=0.0.0.0
+      - MCP_PORT=3703
+      - TZ=${TZ:-America/New_York}
