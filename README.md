@@ -1,10 +1,12 @@
-# spotify-mcp-sse
+# mcp-spotify
 
-A Spotify MCP server designed to run as a **remote service** over SSE — not a local stdio subprocess.
+A Spotify MCP server designed to run as a **remote service** over Streamable HTTP — not a local stdio subprocess.
 
 Most Spotify MCP servers today ([varunneal/spotify-mcp](https://github.com/varunneal/spotify-mcp), [marcelmarais/spotify-mcp-server](https://github.com/marcelmarais/spotify-mcp-server), etc.) launch as a subprocess on the same machine as your AI client. If you have more than one machine — a homelab, a shared dev server, a laptop that moves around — you end up running N copies with N separate OAuth flows.
 
-This server runs **once**, in a Docker container, exposes Spotify tools over SSE on a port, and any MCP client on your LAN or Tailscale network connects to it with one URL. OAuth happens once in a bootstrap script; the refresh token lives on the server.
+This server runs **once**, in a Docker container, exposes Spotify tools over Streamable HTTP on a port, and any MCP client on your LAN or Tailscale network connects to it with one URL. OAuth happens once in a bootstrap script; the refresh token lives on the server.
+
+> Previously published as `spotify-mcp-sse`. Renamed to `mcp-spotify` on the migration from the deprecated HTTP+SSE transport to Streamable HTTP (MCP spec 2025-06-18). The old URL `https://github.com/pete-builds/spotify-mcp-sse` redirects to this repo.
 
 ## Features
 
@@ -49,8 +51,8 @@ In the app's Settings → User Management, add yourself (name + the email on you
 ### 2. One-time OAuth bootstrap (on your local machine)
 
 ```bash
-git clone https://github.com/pete-builds/spotify-mcp-sse
-cd spotify-mcp-sse
+git clone https://github.com/pete-builds/mcp-spotify
+cd mcp-spotify
 export SPOTIFY_CLIENT_ID=...
 export SPOTIFY_CLIENT_SECRET=...
 python3 bootstrap.py
@@ -74,17 +76,17 @@ Start it:
 docker compose up -d --build
 ```
 
-Server is now at `http://<host>:3703/sse`.
+Server is now at `http://<host>:3703/mcp` (Streamable HTTP).
 
 ### 4. Register with your MCP client
 
 Claude Code:
 
 ```bash
-claude mcp add --transport sse --scope user spotify http://<host>:3703/sse
+claude mcp add spotify http://<host>:3703/mcp --transport http --scope user
 ```
 
-Any other MCP-SSE-aware client: point it at the same URL.
+Any other MCP client that supports Streamable HTTP: point it at the same URL.
 
 ## Configuration
 
@@ -117,7 +119,7 @@ If you add tools that need more (e.g. `user-top-read` for "my listening history"
 
 ## Architecture
 
-- [FastMCP](https://github.com/jlowin/fastmcp) over SSE transport
+- [FastMCP](https://github.com/jlowin/fastmcp) over Streamable HTTP transport (MCP spec 2025-06-18)
 - [httpx](https://www.python-httpx.org/) async client with in-memory access-token cache and automatic refresh on 401 or expiry
 - Stdlib-only bootstrap helper (`http.server`, `webbrowser`, `urllib`) — no extra deps for the one-time OAuth dance
 - `python:3.13-slim` base image, `fastmcp==3.1.0`, `httpx==0.28.1`

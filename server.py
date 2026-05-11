@@ -2,7 +2,7 @@
 
 Provides Claude Code tools to search for artists, pull their top tracks, and
 assemble fresh playlists on Pete's Spotify account via the Model Context
-Protocol (SSE transport).
+Protocol (Streamable HTTP transport).
 
 Uses OAuth 2.0 Authorization Code flow with a long-lived refresh token.
 See bootstrap.py for the one-time token acquisition procedure.
@@ -488,7 +488,11 @@ async def remove_tracks_from_playlist(playlist: str, tracks: list[str]) -> str:
 
 
 if __name__ == "__main__":
-    host = os.getenv("MCP_HOST", "0.0.0.0")
-    port = int(os.getenv("MCP_PORT", "3703"))
-    log.info("Starting MCP Spotify on %s:%s (SSE transport)", host, port)
-    mcp.run(transport="sse", host=host, port=port)
+    host = os.getenv("FASTMCP_HOST", os.getenv("MCP_HOST", "0.0.0.0"))
+    port = int(os.getenv("FASTMCP_PORT", os.getenv("MCP_PORT", "3703")))
+    # FastMCP 3.x reads FASTMCP_HOST/FASTMCP_PORT env vars for the
+    # streamable-http listener, so mirror MCP_* into those names too.
+    os.environ["FASTMCP_HOST"] = host
+    os.environ["FASTMCP_PORT"] = str(port)
+    log.info("Starting MCP Spotify on %s:%s (Streamable HTTP transport)", host, port)
+    mcp.run(transport="streamable-http", host=host, port=port)
